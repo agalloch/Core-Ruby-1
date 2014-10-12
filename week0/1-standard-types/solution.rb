@@ -37,11 +37,51 @@ end
 
 # Checks whether its argument is a palindrome, ignoring any whitespaces.
 def palindrome?(object)
-  normalized = object.to_s.gsub(/\s+/, '').downcase
-  return normalized == normalized.reverse
+  normalized = condense(object)
+  normalized == normalized.reverse
 end
 
 # Checks whether the one argument is an anagram of the other.
 def anagram?(word, other)
-  histogram(word.to_s.gsub(/\s+/, '')) == histogram(other.to_s.gsub(/\s+/, ''))
+  histogram(condense(word)) == histogram(condense(other))
+end
+
+def remove_prefix(string, prefix)
+  string.slice(string.index(prefix) + prefix.size, string.size).strip
+end
+
+def remove_suffix(string, suffix)
+  string.slice(0, string.index(suffix)).strip
+end
+
+def digits(n)
+  n.to_s.split(/(?<=\d)/).map { |digit| digit.to_i }
+end
+
+def fizzbuzz(range)
+  result = []
+  range.each do |el|
+    result << :fizz if el % 3 == 0
+    result << :buzz if el % 5 == 0
+    result << el unless el % 3 == 0 || el % 5 == 0
+  end
+
+  result
+end
+
+class Array
+  def to_hash
+    result = {}
+    self.each do |el|
+      key, value = el
+      result[key] = value
+    end
+
+    result
+  end
+end
+
+# Helper method
+def condense(string)
+  string.to_s.gsub(/\s+/, '').downcase
 end
