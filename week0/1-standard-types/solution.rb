@@ -1,13 +1,6 @@
 # Counts the frequency of each character in the given string.
 def histogram(string)
-  counters = Hash.new(0)
-  return counters if string.nil?
-
-  string.each_char do |ch|
-    counters[ch] += 1
-  end
-
-  counters
+  count string.split(/(?<=.)/)
 end
 
 # Checks whether its argument is a prime number.
@@ -47,15 +40,23 @@ def anagram?(word, other)
 end
 
 def remove_prefix(string, prefix)
-  string.slice(string.index(prefix) + prefix.size, string.size).strip
+  if string.start_with? prefix
+    string.slice(prefix.size..-1).strip
+  else
+    string
+  end
 end
 
 def remove_suffix(string, suffix)
-  string.slice(0, string.index(suffix)).strip
+  if string.end_with? suffix
+    string.slice(0..-(suffix.size + 1)).strip
+  else
+    string
+  end
 end
 
 def digits(n)
-  n.to_s.split(/(?<=\d)/).map { |digit| digit.to_i }
+  n.to_s.split(/(?<=\d)/).map(&:to_i)
 end
 
 def fizzbuzz(range)
@@ -72,13 +73,50 @@ end
 class Array
   def to_hash
     result = {}
-    self.each do |el|
+    each do |el|
       key, value = el
       result[key] = value
     end
 
     result
   end
+
+  def index_by
+    result = {}
+    each do |el|
+      result[el] = yield(el) if block_given?
+    end
+
+    result.invert
+  end
+
+  def subarray_count(subarray)
+    return 0 unless subarray && subarray.size <= size
+
+    this_array = join
+    other_array = subarray.join
+    count, index = 0, 0
+
+    this_array.each_char do |_|
+      break if (index..this_array.size).size < other_array.size
+      count += 1 if this_array[index..-1].start_with? other_array
+      index += 1
+    end
+
+    count
+  end
+end
+
+def count(array)
+  return {} unless array.is_a?(Array)
+
+  result = Hash.new(0)
+  array.each { |el| result[el] += 1 }
+  result
+end
+
+def count_words(*sentences)
+  count sentences.join.downcase.scan(/[a-z']+/)
 end
 
 # Helper method
