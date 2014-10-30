@@ -36,7 +36,7 @@ class SolutionTest < Minitest::Test
   def test_normalize
     x_comp = 9
     y_comp = 10
-    sqrt = Math.sqrt(x_comp**2 + y_comp**2)
+    sqrt = Math.sqrt(x_comp**2 + y_comp**2).to_f
 
     @v.x = x_comp
     @v.y = y_comp
@@ -72,6 +72,6 @@ class SolutionTest < Minitest::Test
   end
 
   def test_divide_by_scalar
-    assert_equal Vector2D.new(1, 1), @v / 5
+    assert_equal Vector2D.new(2.5, 2.5), @v / 2
   end
 end

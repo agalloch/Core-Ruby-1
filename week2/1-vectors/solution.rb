@@ -49,7 +49,7 @@ class Vector
   end
 
   def /(scalar)
-    @coords = @coords.map { |x_i| x_i / scalar unless scalar.zero? }
+    @coords = @coords.map { |x_i| x_i / scalar.to_f unless scalar.zero? }
     self
   end
 
