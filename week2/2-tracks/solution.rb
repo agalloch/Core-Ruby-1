@@ -1,3 +1,6 @@
+require 'yaml'
+require 'pry'
+
 class Track
   attr_accessor :artist, :name, :album, :genre
 
@@ -15,19 +18,26 @@ end
 
 class Playlist
   def self.from_yaml(path)
-    # Your code goes here.
+    fail ArgumentError unless path
+
+    tracks = YAML.load_file(path)
+    Playlist.new(*tracks)
   end
 
   def initialize(*tracks)
-    @library = tracks
+    @playlist = tracks
   end
 
   def each
-    # Your code goes here.
+    @playlist.each
   end
 
   def find(&block)
-    # Filter the playlist by a block. Should return a new Playlist.
+    res = []
+    each do |track|
+      res << track if yield(track)
+    end
+    Playlist.new(*res)
   end
 
   def find_by(*filters)
@@ -63,18 +73,31 @@ class Playlist
 
   def to_s
     # It should return a nice tabular representation of all the tracks.
-    Checkout the String method for something that can help you with that.
+    # Checkout the String method for something that can help you with that.
   end
 
-  def &(playlist)
+  def &(other)
     # Your code goes here. This _should_ return new playlist.
   end
 
-  def |(playlist)
+  def |(other)
     # Your code goes here. This _should_ return new playlist.
   end
 
-  def -(playlist)
+  def -(other)
     # Your code goes here. This _should_ return new playlist.
+  end
+
+  def length
+    @playlist.size if @playlist
+  end
+end
+
+class HashWithIndifferentAccess < Hash
+end
+
+class Hash
+  def with_indifferent_access
+    HashWithIndifferentAccess.new(self)
   end
 end
