@@ -14,6 +14,17 @@ class Track
       @artist, @name, @album, @genre = details
     end
   end
+
+  def ==(other)
+    artist.casecmp(other.artist) == 0 &&
+      name.casecmp(other.name) == 0 &&
+      album.casecmp(other.album) == 0 &&
+      genre.casecmp(other.genre)
+  end
+
+  def to_s
+    { 'artist' => artist, 'name' => name, 'album' => album, 'genre' => genre }
+  end
 end
 
 class Playlist
@@ -21,22 +32,26 @@ class Playlist
     fail ArgumentError unless path
 
     tracks = YAML.load_file(path)
-    Playlist.new(*tracks)
+
+    initial_tracks = []
+    tracks.each do |tr|
+      initial_tracks << Track.new(tr.with_indifferent_access)
+    end
+
+    Playlist.new(*initial_tracks)
   end
 
   def initialize(*tracks)
     @playlist = tracks
   end
 
-  def each
-    @playlist.each
+  def each(&block)
+    @playlist.each(&block)
   end
 
-  def find(&block)
-    res = []
-    each do |track|
-      res << track if yield(track)
-    end
+  def find
+    res = each.select { |track| yield(track) }
+
     Playlist.new(*res)
   end
 
@@ -45,30 +60,39 @@ class Playlist
     # argument, the track it should match or not match.
     #
     # Should return a new Playlist.
+
+    find do |track|
+      filters.reduce { |filter, memo| memo && filter.call(track) }
+    end
   end
 
   def find_by_name(name)
-    # Filter the playlist by a block. Should return a new Playlist.
+    find { |track| track.name.downcase == name.downcase }
   end
 
   def find_by_artist(artist)
-    # Finds all the tracks by the artist
+    find { |track| track.artist.downcase == artist.downcase }
   end
 
   def find_by_album(album)
-    # Finds all the tracks from the album.
+    find { |track| track.album.downcase == album.downcase }
   end
 
   def find_by_genre(genre)
-    # Finds all the tracks by genre.
+    find { |track| track.genre.downcase == genre.downcase }
   end
 
   def shuffle
-    # Give me a new playlist that shuffles the tracks of the current one.
+    Playlist.new(*@playlist.shuffle)
   end
 
   def random
-    # Give me a random track.
+    while @previous_index == (random_index = rand(@playlist.size))
+      random_index = rand(@playlist.size)
+    end
+
+    @previous_index = random_index
+    @playlist[@previous_index]
   end
 
   def to_s
@@ -91,13 +115,43 @@ class Playlist
   def length
     @playlist.size if @playlist
   end
+
+  def ==(other)
+    return false if length != other.length
+    other.each.each_with_index do |other_track, index|
+      return false if @playlist[index] != other_track
+    end
+  end
 end
 
 class HashWithIndifferentAccess < Hash
+  def initialize(hash)
+    hash.each { |k, v| self[k.to_sym] = v }
+  end
+
+  def fetch(key)
+    fetch key.to_sym
+  end
 end
 
 class Hash
   def with_indifferent_access
     HashWithIndifferentAccess.new(self)
+  end
+end
+
+class AwesomeRockFilter
+  AWESOME_ARTISTS = %w(Led\ Zeppellin The\ Doors Black\ Sabbath)
+
+  def call(track)
+    AWESOME_ARTISTS.include? track.artist
+  end
+end
+
+class AwesomeJazzFilter
+  AWESOME_ARTISTS = %w(Louis\ Armstrong Frank\ Sinatra Nina\ Simone)
+
+  def call(track)
+    AWESOME_ARTISTS.include? track.artist
   end
 end

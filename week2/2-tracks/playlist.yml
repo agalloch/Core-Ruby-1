@@ -6,8 +6,8 @@
 
 -
  artist: "Iron Maiden"
- name:   "The numnber of the beast"
- album:  "The numnber of the beast"
+ name:   "The number of the beast"
+ album:  "The number of the beast"
  genre:  "heavy metal"
 
 -
@@ -23,9 +23,15 @@
  genre:  "trip hop"
 
 -
+ artist: "Gorillaz"
+ name:   "Clint Eastwood"
+ album:  "Greatest Hits"
+ genre:  "trip hop"
+
+-
  artist: "Iron Maiden"
  name:   "Run To The Hills"
- album:  "The numnber of the beast"
+ album:  "The number of the beast"
  genre:  "heavy metal"
 
 -
