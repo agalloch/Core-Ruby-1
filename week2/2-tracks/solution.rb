@@ -16,10 +16,21 @@ class Track
   end
 
   def ==(other)
-    artist.casecmp(other.artist) == 0 &&
-      name.casecmp(other.name) == 0 &&
-      album.casecmp(other.album) == 0 &&
-      genre.casecmp(other.genre)
+    pairs = [artist, name, album, genre].zip(
+      [other.artist, other.name, other.album, other.genre]
+    )
+    pairs.each do |p|
+      this, that = p
+      return false if this.downcase != that.downcase
+    end
+
+    true
+  end
+
+  alias_method :eql?, :==
+
+  def hash
+    [artist, name, album, genre].hash
   end
 
   def to_s
@@ -50,9 +61,7 @@ class Playlist
   end
 
   def find
-    res = each.select { |track| yield(track) }
-
-    Playlist.new(*res)
+    Playlist.new(*each.select { |track| yield(track) })
   end
 
   def find_by(*filters)
@@ -61,9 +70,17 @@ class Playlist
     #
     # Should return a new Playlist.
 
-    find do |track|
-      filters.reduce { |filter, memo| memo && filter.call(track) }
+    proc = lambda do |track|
+      res = true
+      filters.each do |f|
+        res &&= f.call(track)
+        return false unless res
+      end
+
+      res
     end
+
+    find(&proc)
   end
 
   def find_by_name(name)
@@ -95,25 +112,24 @@ class Playlist
     @playlist[@previous_index]
   end
 
-  def to_s
-    # It should return a nice tabular representation of all the tracks.
-    # Checkout the String method for something that can help you with that.
-  end
-
   def &(other)
-    # Your code goes here. This _should_ return new playlist.
+    Playlist.new(*(@playlist & other.each.to_a))
   end
 
   def |(other)
-    # Your code goes here. This _should_ return new playlist.
+    Playlist.new(*(@playlist + other.each.to_a).uniq)
   end
 
   def -(other)
-    # Your code goes here. This _should_ return new playlist.
+    Playlist.new(*(@playlist - other.each.to_a))
   end
 
   def length
-    @playlist.size if @playlist
+    @playlist ? @playlist.size : 0
+  end
+
+  def empty?
+    length == 0
   end
 
   def ==(other)
@@ -121,6 +137,44 @@ class Playlist
     other.each.each_with_index do |other_track, index|
       return false if @playlist[index] != other_track
     end
+  end
+
+  def to_s
+    # It should return a nice tabular representation of all the tracks.
+    # Checkout the String method for something that can help you with that.
+
+    max_artist, max_name, max_album, max_genre = 0, 0, 0, 0
+    each.each do |t|
+      max_artist = [t.artist.length, max_artist].max
+      max_name = [t.name.length, max_name].max
+      max_album = [t.album.length, max_album].max
+      max_genre = [t.genre.length, max_genre].max
+    end
+
+    offset = 4 * 2
+    delimiters = 4
+    max_line = max_artist + max_name + max_album + max_genre + offset +
+               delimiters + length.to_s.length
+
+    puts '-' * max_line
+    puts 'playlist empty' if empty?
+
+    each.each_with_index do |t, index|
+      track_index = format("%0#{length.to_s.length}d", (index + 1))
+      puts "#{track_index} #{format_track(t, max_artist, max_name, max_album)}"
+    end
+
+    puts '-' * max_line
+  end
+
+  private
+
+  def format_track(t, artist_offset, name_offset, album_offset)
+    artist = "| #{t.artist}#{' ' * (artist_offset - t.artist.length)} "
+    name = "| #{t.name}#{' ' * (name_offset - t.name.length)} "
+    album = "| #{t.album}#{' ' * (album_offset - t.album.length)} "
+    genre = "| #{t.genre}"
+    "#{artist}#{name}#{album}#{genre}"
   end
 end
 
@@ -141,15 +195,7 @@ class Hash
 end
 
 class AwesomeRockFilter
-  AWESOME_ARTISTS = %w(Led\ Zeppellin The\ Doors Black\ Sabbath)
-
-  def call(track)
-    AWESOME_ARTISTS.include? track.artist
-  end
-end
-
-class AwesomeJazzFilter
-  AWESOME_ARTISTS = %w(Louis\ Armstrong Frank\ Sinatra Nina\ Simone)
+  AWESOME_ARTISTS = %w(Led\ Zeppellin The\ Doors Black\ Sabbath Iron\ Maiden)
 
   def call(track)
     AWESOME_ARTISTS.include? track.artist
